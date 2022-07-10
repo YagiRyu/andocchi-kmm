@@ -1,7 +1,9 @@
 plugins {
-    kotlin("multiplatform")
-    kotlin("native.cocoapods")
-    id("com.android.library")
+    kotlin(multiplatform)
+    kotlin(cocoapods)
+    kotlin(serializationPlugin) version Versions.kotlin
+    id(androidLibrary)
+    id(sqldelightPlugin)
 }
 
 version = "1.0"
@@ -23,14 +25,58 @@ kotlin {
     }
     
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                // ktor
+                implementation(libs.ktor.core)
+                implementation(libs.ktor.serialization)
+                implementation(libs.ktor.logging)
+                implementation(libs.ktor.content.negotiation)
+
+                // koin
+                implementation(libs.koin.core)
+
+                // serialization
+                implementation(libs.serialization)
+
+                // napier
+                implementation(libs.napier)
+
+                // coroutine
+                implementation(libs.coroutine.core)
+
+                // sqldelight
+                implementation(libs.sqldelight.runtime)
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+
+                // koin
+                implementation(libs.koin.test)
             }
         }
-        val androidMain by getting
-        val androidTest by getting
+        val androidMain by getting {
+            dependencies {
+                // ktor
+                implementation(libs.ktor.android)
+
+                // coroutine
+                implementation(libs.coroutine.android)
+
+                // sqldelight
+                implementation(libs.sqldelight.android)
+            }
+        }
+        val androidTest by getting {
+            dependencies {
+                implementation(libs.coroutine.test)
+                implementation(libs.mockk)
+                implementation(libs.junit.test)
+                implementation(libs.turbine)
+            }
+        }
         val iosX64Main by getting
         val iosArm64Main by getting
         val iosSimulatorArm64Main by getting
@@ -39,6 +85,13 @@ kotlin {
             iosX64Main.dependsOn(this)
             iosArm64Main.dependsOn(this)
             iosSimulatorArm64Main.dependsOn(this)
+            dependencies {
+                // ktor
+                implementation(libs.ktor.darwin)
+
+                // sqldelight
+                implementation(libs.sqldelight.native)
+            }
         }
         val iosX64Test by getting
         val iosArm64Test by getting
@@ -53,10 +106,16 @@ kotlin {
 }
 
 android {
-    compileSdk = 32
+    compileSdk = Versions.compilerSdk
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdk = 21
-        targetSdk = 32
+        minSdk = Versions.minSdk
+        targetSdk = Versions.targetSdk
+    }
+}
+
+sqldelight {
+    database("AppDatabase") {
+        packageName = "com.github.ryutaro.andocchi_kmm.db"
     }
 }
